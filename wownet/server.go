@@ -1,7 +1,6 @@
 package wownet
 
 import (
-	"errors"
 	"fmt"
 	"gitee.com/mrmateoliu/wow_launch.git/wowiface"
 	"net"
@@ -16,19 +15,8 @@ type Server struct {
 	Ip string
 	//服务器端口
 	Port int
-}
-
-// 定义当前客户端链接的所绑定的handle api(目前这个handle是写死的, 以后优化应该由业务端自定义handle方法)
-func CallBackToClient(conn *net.TCPConn, data []byte, cnt int) error {
-	//回显业务
-	fmt.Println("处理回调客户端回显操作...")
-	if _, err := conn.Write(data[:cnt]); err != nil {
-		if err != nil {
-			fmt.Println("回写给客户端出现错误:", err)
-			return errors.New("CallBackToClient Error")
-		}
-	}
-	return nil
+	//当前的Server添加一个router, server注册的链接对应的处理业务
+	Router wowiface.IRouter
 }
 
 // 1.启动服务器
@@ -65,7 +53,7 @@ func (s *Server) Start() {
 			}
 
 			// 将该处理新链接的业务方法 和 conn机型绑定,得到链接模块
-			dealConn := NewConnection(conn, cid, CallBackToClient)
+			dealConn := NewConnection(conn, cid, s.Router)
 			cid++
 
 			//启动当前的连接业务处理
@@ -88,6 +76,12 @@ func (s *Server) Server() {
 	select {}
 }
 
+// 4.添加一个路由方法
+func (s *Server) AddRouter(router wowiface.IRouter) {
+	s.Router = router
+	fmt.Println("添加 Router 成功")
+}
+
 // 初始化Server模块方法
 func NewServer(name string) wowiface.IServer {
 	s := &Server{
@@ -95,6 +89,7 @@ func NewServer(name string) wowiface.IServer {
 		SVersion: "tcp4",
 		Ip:       "0.0.0.0",
 		Port:     8999,
+		Router:   nil,
 	}
 
 	return s

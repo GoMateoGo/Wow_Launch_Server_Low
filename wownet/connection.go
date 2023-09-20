@@ -19,21 +19,21 @@ type Connection struct {
 	//当前的链接状态
 	IsClosed bool
 
-	//当前链接所绑定的处理业务方法api
-	HandleApi wowiface.HandleFunc
-
 	//告知当前链接已经退出的/停止 channel
 	ExitChan chan bool
+
+	//该链接处理的方法Router
+	Router wowiface.IRouter
 }
 
 // 初始化链接模块的方法
-func NewConnection(conn *net.TCPConn, connId uint32, callback_api wowiface.HandleFunc) *Connection {
+func NewConnection(conn *net.TCPConn, connId uint32, router wowiface.IRouter) *Connection {
 	c := &Connection{
-		Conn:      conn,
-		ConnId:    connId,
-		HandleApi: callback_api,
-		IsClosed:  false,
-		ExitChan:  make(chan bool, 1),
+		Conn:     conn,
+		ConnId:   connId,
+		Router:   router,
+		IsClosed: false,
+		ExitChan: make(chan bool, 1),
 	}
 
 	return c
@@ -48,17 +48,25 @@ func (c *Connection) StartReader() {
 	for {
 		//读取客户端的数据到buf中,目前最大512字节
 		buf := make([]byte, 512)
-		cnt, err := c.Conn.Read(buf)
+		_, err := c.Conn.Read(buf)
 		if err != nil {
 			fmt.Println("读取客户端数据失败", err)
 			continue
 		}
 
-		//调用当前链接所绑定的handleAPI
-		if err := c.HandleApi(c.Conn, buf, cnt); err != nil {
-			fmt.Println("绑定HandleAPI失败,链接id", c.ConnId, "错误:", err)
-			break
+		//得到当前conn数据的Request请求数据
+		req := Request{
+			conn: c,
+			data: buf,
 		}
+
+		//执行注册的路由方法
+		go func(request wowiface.IRequest) {
+			//从路由中 找到注册绑定的conn对应的router调用
+			c.Router.BeforeHandle(request)
+			c.Router.Handle(request)
+			c.Router.AfterHandle(request)
+		}(&req)
 	}
 }
 
