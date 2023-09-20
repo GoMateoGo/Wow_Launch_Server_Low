@@ -12,7 +12,7 @@ func main() {
 	fmt.Println("客户端启动...")
 	time.Sleep(1 * time.Second)
 	// 1. 链接远程服务器,得到conn链接
-	conn, err := net.Dial("tcp", "127.0.0.1:8999")
+	conn, err := net.Dial("tcp", "127.0.0.1:7777")
 	if err != nil {
 		fmt.Println("客户端链接失败...", err)
 		return

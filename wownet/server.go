@@ -2,6 +2,7 @@ package wownet
 
 import (
 	"fmt"
+	"gitee.com/mrmateoliu/wow_launch.git/utils"
 	"gitee.com/mrmateoliu/wow_launch.git/wowiface"
 	"net"
 )
@@ -10,7 +11,7 @@ type Server struct {
 	// 服务器名称
 	Name string
 	// 服务器版本
-	SVersion string
+	IpVersion string
 	//服务器IP
 	Ip string
 	//服务器端口
@@ -21,18 +22,21 @@ type Server struct {
 
 // 1.启动服务器
 func (s *Server) Start() {
+	fmt.Printf("[配置信息]:\n 服务器名称:%s\n Ip地址:%s\n 端口号:%d\n",
+		utils.GlobalObject.Name, utils.GlobalObject.Host, utils.GlobalObject.TcpPort)
+	fmt.Printf(" 版本:%s\n 最大链接数量:%d\n 最大包尺寸:%d\n", utils.GlobalObject.Version, utils.GlobalObject.MaxConn, utils.GlobalObject.MaxPackageSize)
 	fmt.Printf("服务器启动.. 地址:%s, 端口:%d\n", s.Ip, s.Port)
 
 	go func() {
 		// 1.获取一个TCP的addr
-		addr, err := net.ResolveTCPAddr(s.SVersion, fmt.Sprintf("%s:%d", s.Ip, s.Port))
+		addr, err := net.ResolveTCPAddr(s.IpVersion, fmt.Sprintf("%s:%d", s.Ip, s.Port))
 		if err != nil {
 			//TODO 增加日志
 			fmt.Println("服务器启动错误:", err)
 			return
 		}
 		// 2.监听服务器地址
-		listener, err := net.ListenTCP(s.SVersion, addr)
+		listener, err := net.ListenTCP(s.IpVersion, addr)
 		if err != nil {
 			//TODO 日志
 			fmt.Println("监听服务器地址错误:", err)
@@ -85,11 +89,11 @@ func (s *Server) AddRouter(router wowiface.IRouter) {
 // 初始化Server模块方法
 func NewServer(name string) wowiface.IServer {
 	s := &Server{
-		Name:     name,
-		SVersion: "tcp4",
-		Ip:       "0.0.0.0",
-		Port:     8999,
-		Router:   nil,
+		Name:      utils.GlobalObject.Name,
+		IpVersion: "tcp4",
+		Ip:        utils.GlobalObject.Host,
+		Port:      utils.GlobalObject.TcpPort,
+		Router:    nil,
 	}
 
 	return s

@@ -2,6 +2,7 @@ package wownet
 
 import (
 	"fmt"
+	"gitee.com/mrmateoliu/wow_launch.git/utils"
 	"gitee.com/mrmateoliu/wow_launch.git/wowiface"
 	"net"
 )
@@ -47,7 +48,7 @@ func (c *Connection) StartReader() {
 
 	for {
 		//读取客户端的数据到buf中,目前最大512字节
-		buf := make([]byte, 512)
+		buf := make([]byte, utils.GlobalObject.MaxPackageSize)
 		_, err := c.Conn.Read(buf)
 		if err != nil {
 			fmt.Println("读取客户端数据失败", err)
