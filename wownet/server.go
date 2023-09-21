@@ -16,8 +16,8 @@ type Server struct {
 	Ip string
 	//服务器端口
 	Port int
-	//当前的Server添加一个router, server注册的链接对应的处理业务
-	Router wowiface.IRouter
+	//当前server的消息管理模块, 用来绑定MsgId和对应的处理业务Api关系
+	MsgHandler wowiface.IMsgHandle
 }
 
 // 1.启动服务器
@@ -57,7 +57,7 @@ func (s *Server) Start() {
 			}
 
 			// 将该处理新链接的业务方法 和 conn机型绑定,得到链接模块
-			dealConn := NewConnection(conn, cid, s.Router)
+			dealConn := NewConnection(conn, cid, s.MsgHandler)
 			cid++
 
 			//启动当前的连接业务处理
@@ -81,19 +81,19 @@ func (s *Server) Server() {
 }
 
 // 4.添加一个路由方法
-func (s *Server) AddRouter(router wowiface.IRouter) {
-	s.Router = router
+func (s *Server) AddRouter(msgId uint32, router wowiface.IRouter) {
+	s.MsgHandler.AddRouter(msgId, router)
 	fmt.Println("添加 Router 成功")
 }
 
 // 初始化Server模块方法
 func NewServer(name string) wowiface.IServer {
 	s := &Server{
-		Name:      utils.GlobalObject.Name,
-		IpVersion: "tcp4",
-		Ip:        utils.GlobalObject.Host,
-		Port:      utils.GlobalObject.TcpPort,
-		Router:    nil,
+		Name:       utils.GlobalObject.Name,
+		IpVersion:  "tcp4",
+		Ip:         utils.GlobalObject.Host,
+		Port:       utils.GlobalObject.TcpPort,
+		MsgHandler: NewMsgHandle(),
 	}
 
 	return s

@@ -42,7 +42,9 @@ func main() {
 	// 1. 创建server句柄
 	s := wownet.NewServer("wow-launch")
 	// 2. 给当前框架添加自定义router
-	s.AddRouter(&PingRouter{})
+	s.AddRouter(0, &PingRouter{})
+	s.AddRouter(1, &HelloRouter{})
+
 	// 3. 启动服务器
 	s.Server()
 }
