@@ -1,9 +1,7 @@
 package conf
 
 import (
-	"fmt"
 	"gitee.com/mrmateoliu/wow_launch.git/utils"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -15,11 +13,20 @@ import (
 // --------------------------------------------------------
 // -初始化日志组件
 func InitLogger() *zap.SugaredLogger {
+	var writeSyncer zapcore.WriteSyncer
+
 	logMode := zapcore.DebugLevel
-	if !viper.GetBool("mod.develop") {
+	if !utils.GlobalObject.Develop {
 		logMode = zapcore.InfoLevel
+
+		// 如果 Develop 为假，只输出到文件
+		writeSyncer = getWriteSyncer()
+	} else {
+		// 如果 Develop 为真，将日志同时输出到文件和控制台
+		writeSyncer = zapcore.NewMultiWriteSyncer(getWriteSyncer(), zapcore.AddSync(os.Stdout))
 	}
-	core := zapcore.NewCore(getEncoder(), zapcore.NewMultiWriteSyncer(getWriteSyncer(), zapcore.AddSync(os.Stdout)), logMode)
+
+	core := zapcore.NewCore(getEncoder(), writeSyncer, logMode)
 
 	return zap.New(core).Sugar()
 }
@@ -43,7 +50,6 @@ func getWriteSyncer() zapcore.WriteSyncer {
 	sRootDir, _ := os.Getwd()                //取当前文件目录
 	// 当前文件目录 + 分隔符 + log文件夹 + 分隔符 + 当前时间 + .txt
 	sLogFilePath := sRootDir + sSeparator + "log" + sSeparator + time.Now().Format(time.DateOnly) + ".txt"
-	fmt.Println(sLogFilePath)
 
 	lumberjackSyncer := &lumberjack.Logger{
 		Filename:   sLogFilePath,

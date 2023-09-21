@@ -100,4 +100,12 @@ func SysInit() {
 	// =初始化日志配置
 	utils.Logger = conf.InitLogger()
 
+	// ========================================================
+	// =初始化数据链接
+	db, err := conf.InitDB()
+	utils.DB = db
+	if err != nil {
+		fmt.Println("数据库连接失败请检查数据库配置....")
+		//panic("数据库连接失败请检查数据库配置....")
+	}
 }
