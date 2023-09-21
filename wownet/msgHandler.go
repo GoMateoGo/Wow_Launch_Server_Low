@@ -2,6 +2,7 @@ package wownet
 
 import (
 	"fmt"
+	"gitee.com/mrmateoliu/wow_launch.git/utils"
 	"gitee.com/mrmateoliu/wow_launch.git/wowiface"
 )
 
@@ -12,13 +13,20 @@ import (
 type MsgHandle struct {
 	//存放每个MsgId 所对应的处理方法
 	APis map[uint32]wowiface.IRouter
+
+	//负责Worker取任务的 [消息队列]
+	TaskQueue []chan wowiface.IRequest
+
+	//业务 [工作池数量]
+	WorkerPoolSize uint32
 }
 
-//初始化/创建MsgHandle方法
-
+// 初始化/创建MsgHandle方法
 func NewMsgHandle() *MsgHandle {
 	return &MsgHandle{
-		APis: make(map[uint32]wowiface.IRouter),
+		APis:           make(map[uint32]wowiface.IRouter),
+		WorkerPoolSize: utils.GlobalObject.WorkerPoolSize, //从全局配置文件中读取
+		TaskQueue:      make([]chan wowiface.IRequest, utils.GlobalObject.MaxWorkerTaskLen),
 	}
 }
 

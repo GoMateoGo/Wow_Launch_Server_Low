@@ -15,16 +15,15 @@ type GlobalObj struct {
 	/*
 		Server
 	*/
-	TcpServer wowiface.IServer //当前全局的Server对象
-	Host      string           //当前服务器主机监听的IP
-	TcpPort   int              //当前服务器主机监听的端口号
-	Name      string           //当前服务器的名称
-	/*
-
-	 */
-	Version        string //当前的版本号
-	MaxConn        int    //当前服务器主机允许的最大连接数
-	MaxPackageSize uint32 //当前框架数据包的最大值
+	TcpServer        wowiface.IServer //当前全局的Server对象
+	Host             string           //当前服务器主机监听的IP
+	TcpPort          int              //当前服务器主机监听的端口号
+	Name             string           //当前服务器的名称
+	Version          string           //当前的版本号
+	MaxConn          int              //当前服务器主机允许的最大连接数
+	MaxPackageSize   uint32           //当前框架数据包的最大值
+	WorkerPoolSize   uint32           //当前业务工作池的Goroutine数量
+	MaxWorkerTaskLen uint32           //框架允许用户最大开辟多少个Worker
 }
 
 /*
@@ -49,12 +48,14 @@ func (g *GlobalObj) Reload() {
 func init() {
 	//如果配置文件没有加载,先生成默认
 	GlobalObject = &GlobalObj{
-		Host:           "0.0.0.0",
-		TcpPort:        8999,
-		Name:           "wow_launch_App",
-		Version:        "v0.1",
-		MaxConn:        1000,
-		MaxPackageSize: 4096,
+		Host:             "0.0.0.0",
+		TcpPort:          8999,
+		Name:             "wow_launch_App",
+		Version:          "v0.1",
+		MaxConn:          1000,
+		MaxPackageSize:   4096,
+		WorkerPoolSize:   10,
+		MaxWorkerTaskLen: 1024,
 	}
 
 	//应该尝试从conf/xxx.json去加载一些用户自定义参数
