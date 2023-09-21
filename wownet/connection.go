@@ -13,6 +13,9 @@ import (
 链接模块
 */
 type Connection struct {
+	//当前Conn隶属于哪个Server
+	TcpServer wowiface.IServer
+
 	// 当前链接的socket TCP套接字
 	Conn *net.TCPConn
 
@@ -33,8 +36,9 @@ type Connection struct {
 }
 
 // 初始化链接模块的方法
-func NewConnection(conn *net.TCPConn, connId uint32, msgHandle wowiface.IMsgHandle) *Connection {
+func NewConnection(server wowiface.IServer, conn *net.TCPConn, connId uint32, msgHandle wowiface.IMsgHandle) *Connection {
 	c := &Connection{
+		TcpServer: server,
 		Conn:      conn,
 		ConnId:    connId,
 		MsgHandle: msgHandle,
@@ -42,6 +46,9 @@ func NewConnection(conn *net.TCPConn, connId uint32, msgHandle wowiface.IMsgHand
 		msgChan:   make(chan []byte),
 		ExitChan:  make(chan bool, 1),
 	}
+
+	//将conn加入到ConnManager中
+	c.TcpServer.GetConnMgr().Add(c)
 
 	return c
 }
@@ -153,6 +160,9 @@ func (c *Connection) Stop() {
 
 	//告知writer关闭
 	c.ExitChan <- true
+
+	//将当前链接从ConnMgr中摘除
+	c.TcpServer.GetConnMgr().Remove(c)
 
 	//关闭管道 回收资源
 	close(c.ExitChan)

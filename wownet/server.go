@@ -64,13 +64,14 @@ func (s *Server) Start() {
 			//判断当前已链接数量是否超过允许链接最大数量.
 			//如果超过最大数量,关闭此链接.
 			if s.ConnMgr.Len() >= utils.GlobalObject.MaxConn {
+				fmt.Println("当前链接超过最大数量,最大数量为:", utils.GlobalObject.MaxConn)
 				conn.Close()
 				//TODO 给用户发送一个消息,告知连接超出最大值的错误包
 				continue
 			}
 
 			// 将该处理新链接的业务方法 和 conn机型绑定,得到链接模块
-			dealConn := NewConnection(conn, cid, s.MsgHandler)
+			dealConn := NewConnection(s, conn, cid, s.MsgHandler)
 			cid++
 
 			//启动当前的连接业务处理
@@ -113,4 +114,9 @@ func NewServer(name string) wowiface.IServer {
 	}
 
 	return s
+}
+
+// 获取当前Server的链接管理器
+func (s *Server) GetConnMgr() wowiface.IConnManager {
+	return s.ConnMgr
 }
