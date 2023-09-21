@@ -11,30 +11,31 @@ type PingRouter struct {
 	wownet.BaseRouter
 }
 
-// Test beforeHandle
-func (s *PingRouter) BeforeHandle(request wowiface.IRequest) {
-	fmt.Println("Call Router BeforeHandle")
-	_, err := request.GetConnection().GetTCPConnection().Write([]byte("befor ping\n"))
-	if err != nil {
-		fmt.Println("call back BeforePing err", err)
-	}
-}
-
-// Test Handle
 func (s *PingRouter) Handle(request wowiface.IRequest) {
 	fmt.Println("Call Router Handle")
-	_, err := request.GetConnection().GetTCPConnection().Write([]byte("ping ping ping\n"))
+	//先读取客户端的数据,在回写ping.ping.ping
+
+	fmt.Println("接受到的消息:", request.GetMsgId())
+	fmt.Println("接受到的包体:", string(request.GetData()))
+
+	err := request.GetConnection().SendMsg(200, []byte("ping...ping...ping"))
 	if err != nil {
-		fmt.Println("call back Ping Ping Ping err", err)
+		fmt.Println(err)
 	}
 }
 
-// Test AfterHandle
-func (s *PingRouter) AfterHandle(request wowiface.IRequest) {
-	fmt.Println("Call Router AfterHandle")
-	_, err := request.GetConnection().GetTCPConnection().Write([]byte("after ping\n"))
+type HelloRouter struct {
+	wownet.BaseRouter
+}
+
+func (s *HelloRouter) Handle(request wowiface.IRequest) {
+	fmt.Println("call router HelloWow")
+	fmt.Println("接受到的消息Id:", request.GetMsgId())
+	fmt.Println("接受到的包体内容:", string(request.GetData()))
+
+	err := request.GetConnection().SendMsg(201, []byte("hello..Wow"))
 	if err != nil {
-		fmt.Println("call back AfterHandle err", err)
+		fmt.Println(err)
 	}
 }
 

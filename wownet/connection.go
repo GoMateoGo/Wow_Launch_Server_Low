@@ -21,21 +21,25 @@ type Connection struct {
 	//当前的链接状态
 	IsClosed bool
 
-	//告知当前链接已经退出的/停止 channel
+	//告知当前链接已经退出的/停止 channel(由Reader告知Write退出)
 	ExitChan chan bool
 
-	//该链接处理的方法Router
-	Router wowiface.IRouter
+	//无缓冲的管道,用于读/写Goroutine之间的消息通信
+	msgChan chan []byte
+
+	//消息的管理MsgId 和对应的处理业务Api关系
+	MsgHandle wowiface.IMsgHandle
 }
 
 // 初始化链接模块的方法
-func NewConnection(conn *net.TCPConn, connId uint32, router wowiface.IRouter) *Connection {
+func NewConnection(conn *net.TCPConn, connId uint32, msgHandle wowiface.IMsgHandle) *Connection {
 	c := &Connection{
-		Conn:     conn,
-		ConnId:   connId,
-		Router:   router,
-		IsClosed: false,
-		ExitChan: make(chan bool, 1),
+		Conn:      conn,
+		ConnId:    connId,
+		MsgHandle: msgHandle,
+		IsClosed:  false,
+		msgChan:   make(chan []byte),
+		ExitChan:  make(chan bool, 1),
 	}
 
 	return c
@@ -43,8 +47,8 @@ func NewConnection(conn *net.TCPConn, connId uint32, router wowiface.IRouter) *C
 
 // 链接的读业务方法
 func (c *Connection) StartReader() {
-	fmt.Println("读取 goroutine 数据中....")
-	defer fmt.Println("当前链接id:", c.ConnId, "读写退出..,远端地址:", c.Conn.RemoteAddr().String())
+	fmt.Println("[读 Goroutine 运行中...]")
+	defer fmt.Println("[读Goroutine退出] 当前链接id:", c.ConnId, "..,远端地址:", c.Conn.RemoteAddr().String())
 	defer c.Stop()
 
 	for {
@@ -89,13 +93,29 @@ func (c *Connection) StartReader() {
 			msg:  msg,
 		}
 
-		//执行注册的路由方法
-		go func(request wowiface.IRequest) {
-			//从路由中 找到注册绑定的conn对应的router调用
-			c.Router.BeforeHandle(request)
-			c.Router.Handle(request)
-			c.Router.AfterHandle(request)
-		}(&req)
+		//从路由中 找到注册绑定的conn对应的router调用
+		//根据绑定好的msgId 找到对应的处理Api业务 执行
+		go c.MsgHandle.DoMsgHandler(&req)
+	}
+}
+
+// 写消息的Goroutine, 专门发送给客户端消息的方法
+func (c *Connection) StartWriter() {
+	fmt.Println("[写 Goroutine 运行中...]")
+	defer fmt.Println("[写Goroutine退出] 当前链接id:", c.ConnId, "..,远端地址:", c.Conn.RemoteAddr().String())
+	//阻塞,等待channel的消息,然后进行写给客户端
+	for {
+		select {
+		case data := <-c.msgChan:
+			//有数据要写给客户端
+			if _, err := c.Conn.Write(data); err != nil {
+				fmt.Println("发送消息数据出错:", err)
+				return
+			}
+		case <-c.ExitChan:
+			//代表Reader已退出,此时Write也要退出
+			return
+		}
 	}
 }
 
@@ -106,8 +126,8 @@ func (c *Connection) Start() {
 	//启动从当前连接的读数据业务
 	go c.StartReader()
 
-	//TODO 启动从当前连接写数据的业务
-
+	//启动从当前连接写数据的业务
+	go c.StartWriter()
 }
 
 // 停止链接 结束当前链接的工作
@@ -123,8 +143,12 @@ func (c *Connection) Stop() {
 	//应该关闭socekt链接
 	c.Conn.Close()
 
+	//告知writer关闭
+	c.ExitChan <- true
+
 	//关闭管道 回收资源
 	close(c.ExitChan)
+	close(c.msgChan)
 }
 
 // 获取当前链接绑定的socket connect
@@ -158,10 +182,7 @@ func (c *Connection) SendMsg(msgId uint32, data []byte) error {
 	}
 
 	//将数据回写给客户端
-	if _, err := c.Conn.Write(binaryMsg); err != nil {
-		fmt.Println("回写数据包给客户端时出现错误:", err, "错误包Id:", msgId)
-		return errors.New("当前链接数据包回写错误")
-	}
+	c.msgChan <- binaryMsg
 
 	return nil
 }
