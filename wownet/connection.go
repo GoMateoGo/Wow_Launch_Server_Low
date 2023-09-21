@@ -3,6 +3,7 @@ package wownet
 import (
 	"errors"
 	"fmt"
+	"gitee.com/mrmateoliu/wow_launch.git/utils"
 	"gitee.com/mrmateoliu/wow_launch.git/wowiface"
 	"io"
 	"net"
@@ -93,9 +94,16 @@ func (c *Connection) StartReader() {
 			msg:  msg,
 		}
 
-		//从路由中 找到注册绑定的conn对应的router调用
-		//根据绑定好的msgId 找到对应的处理Api业务 执行
-		go c.MsgHandle.DoMsgHandler(&req)
+		//如果已经开启工作池机制
+		if utils.GlobalObject.WorkerPoolSize > 0 {
+			//已经开启了工作池机制,将消息发送给worker工作池处理即可
+			c.MsgHandle.SendMsgToTaskQueue(&req)
+		} else {
+
+			//从路由中 找到注册绑定的conn对应的router调用
+			//根据绑定好的msgId 找到对应的处理Api业务 执行
+			go c.MsgHandle.DoMsgHandler(&req)
+		}
 	}
 }
 

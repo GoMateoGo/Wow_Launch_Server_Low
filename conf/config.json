@@ -4,5 +4,6 @@
   "TcpPort": 7777,
   "MaxConn": 3,
   "Version":"v0.1",
-  "MaxPackageSize": 4096
+  "MaxPackageSize": 4096,
+  "WorkerPoolSize": 10
 }

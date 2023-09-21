@@ -28,6 +28,9 @@ func (s *Server) Start() {
 	fmt.Printf("服务器启动.. 地址:%s, 端口:%d\n", s.Ip, s.Port)
 
 	go func() {
+		// 0. 开启消息队列及Worker工作池
+		s.MsgHandler.StartWorkerPool()
+
 		// 1.获取一个TCP的addr
 		addr, err := net.ResolveTCPAddr(s.IpVersion, fmt.Sprintf("%s:%d", s.Ip, s.Port))
 		if err != nil {
