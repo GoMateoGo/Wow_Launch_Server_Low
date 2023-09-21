@@ -18,6 +18,8 @@ type Server struct {
 	Port int
 	//当前server的消息管理模块, 用来绑定MsgId和对应的处理业务Api关系
 	MsgHandler wowiface.IMsgHandle
+	//该Server的连接管理器
+	ConnMgr wowiface.IConnManager
 }
 
 // 1.启动服务器
@@ -59,6 +61,14 @@ func (s *Server) Start() {
 				continue
 			}
 
+			//判断当前已链接数量是否超过允许链接最大数量.
+			//如果超过最大数量,关闭此链接.
+			if s.ConnMgr.Len() >= utils.GlobalObject.MaxConn {
+				conn.Close()
+				//TODO 给用户发送一个消息,告知连接超出最大值的错误包
+				continue
+			}
+
 			// 将该处理新链接的业务方法 和 conn机型绑定,得到链接模块
 			dealConn := NewConnection(conn, cid, s.MsgHandler)
 			cid++
@@ -71,7 +81,9 @@ func (s *Server) Start() {
 
 // 2.停止服务器
 func (s *Server) Stop() {
-	//TODO 释放资源等等.. 状态,资源,开辟的链接.
+	//释放资源等等.. 状态,资源,开辟的链接.
+	fmt.Println("[正在停止服务器] 进行资源回收.")
+	s.ConnMgr.ClearConn()
 }
 
 // 3.运行服务器
@@ -97,6 +109,7 @@ func NewServer(name string) wowiface.IServer {
 		Ip:         utils.GlobalObject.Host,
 		Port:       utils.GlobalObject.TcpPort,
 		MsgHandler: NewMsgHandle(),
+		ConnMgr:    NewConnManager(),
 	}
 
 	return s
