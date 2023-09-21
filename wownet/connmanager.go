@@ -3,6 +3,7 @@ package wownet
 import (
 	"errors"
 	"fmt"
+	"gitee.com/mrmateoliu/wow_launch.git/utils"
 	"gitee.com/mrmateoliu/wow_launch.git/wowiface"
 	"sync"
 )
@@ -43,7 +44,9 @@ func (connMgr *ConnManager) Remove(conn wowiface.IConnection) {
 
 	//删除连接器
 	delete(connMgr.connections, conn.GetConnId())
-	fmt.Println("已删除一个连接,连接Id为:", conn.GetConnId(), "当前连接数量:", connMgr.Len())
+	if utils.GlobalObject.Develop {
+		fmt.Println("已删除一个连接,连接Id为:", conn.GetConnId(), "当前连接数量:", connMgr.Len())
+	}
 }
 
 // 根据connId获取链接

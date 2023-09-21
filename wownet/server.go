@@ -30,8 +30,7 @@ type Server struct {
 func (s *Server) Start() {
 	fmt.Printf("[配置信息]:\n 服务器名称:%s\n Ip地址:%s\n 端口号:%d\n",
 		utils.GlobalObject.Name, utils.GlobalObject.Host, utils.GlobalObject.TcpPort)
-	fmt.Printf(" 版本:%s\n 最大链接数量:%d\n 最大包尺寸:%d\n", utils.GlobalObject.Version, utils.GlobalObject.MaxConn, utils.GlobalObject.MaxPackageSize)
-	fmt.Printf("服务器启动.. 地址:%s, 端口:%d\n", s.Ip, s.Port)
+	fmt.Printf(" 版本:%s\n 客户端最大链接数:%d\n 最大数据包尺寸:%d\n", utils.GlobalObject.Version, utils.GlobalObject.MaxConn, utils.GlobalObject.MaxPackageSize)
 
 	go func() {
 		// 0. 开启消息队列及Worker工作池
@@ -49,7 +48,7 @@ func (s *Server) Start() {
 			utils.Logger.Error(fmt.Sprintf("监听服务器地址错误:%s", err))
 			return
 		}
-		fmt.Printf("服务器启动成功: 服务器名:%s\n", s.Name)
+		fmt.Println("---------->服务器启动成功<----------")
 		var cid uint32
 		cid = 0
 
@@ -91,7 +90,7 @@ func (s *Server) Stop() {
 // 3.运行服务器
 func (s *Server) Server() {
 	s.Start()
-
+	utils.Logger.Info("服务器启动完成")
 	//TODO 其他业务...
 	//需要阻塞状态
 	select {}

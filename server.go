@@ -55,15 +55,18 @@ func DoConnectionBegin(conn wowiface.IConnection) {
 	// --------------------------------------------------------
 	// - 测试 链接属性设置
 	//给这个链接设置一些属性
-	fmt.Println("----->设置链接属性<-----")
-	conn.SetProperty("Name", "魔兽登录器")
-	conn.SetProperty("网址", "https://www.getgamesf.com")
+	if utils.GlobalObject.Develop {
+		fmt.Println("----->设置链接属性<-----")
+		conn.SetProperty("Name", "魔兽登录器")
+		conn.SetProperty("网址", "https://www.getgamesf.com")
+	}
 }
 
 // 链接断开前的钩子函数
 func DoConnectionLost(conn wowiface.IConnection) {
-	fmt.Println("===>关闭连接钩子已经调用,关闭链接Id=", conn.GetConnId())
-
+	if utils.GlobalObject.Develop {
+		fmt.Println("===>关闭连接钩子已经调用,关闭链接Id=", conn.GetConnId())
+	}
 	// --------------------------------------------------------
 	// - 测试 链接属性读取
 	if re, err := conn.GetProperty("Name"); err == nil {

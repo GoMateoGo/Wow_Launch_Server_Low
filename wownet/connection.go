@@ -65,8 +65,8 @@ func NewConnection(server wowiface.IServer, conn *net.TCPConn, connId uint32, ms
 func (c *Connection) StartReader() {
 	if utils.GlobalObject.Develop {
 		fmt.Println("[读 Goroutine 运行中...]")
+		defer fmt.Println("[读Goroutine退出] 当前链接id:", c.ConnId, "..,远端地址:", c.Conn.RemoteAddr().String())
 	}
-	defer fmt.Println("[读Goroutine退出] 当前链接id:", c.ConnId, "..,远端地址:", c.Conn.RemoteAddr().String())
 	defer c.Stop()
 
 	for {
@@ -122,8 +122,8 @@ func (c *Connection) StartReader() {
 func (c *Connection) StartWriter() {
 	if utils.GlobalObject.Develop {
 		fmt.Println("[写 Goroutine 运行中...]")
+		defer fmt.Println("[写Goroutine退出] 当前链接id:", c.ConnId, "..,远端地址:", c.Conn.RemoteAddr().String())
 	}
-	defer fmt.Println("[写Goroutine退出] 当前链接id:", c.ConnId, "..,远端地址:", c.Conn.RemoteAddr().String())
 	//阻塞,等待channel的消息,然后进行写给客户端
 	for {
 		select {
