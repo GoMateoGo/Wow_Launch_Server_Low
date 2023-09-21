@@ -52,6 +52,7 @@ func NewConnection(server wowiface.IServer, conn *net.TCPConn, connId uint32, ms
 		IsClosed:  false,
 		msgChan:   make(chan []byte),
 		ExitChan:  make(chan bool, 1),
+		property:  make(map[string]interface{}),
 	}
 
 	//将conn加入到ConnManager中
