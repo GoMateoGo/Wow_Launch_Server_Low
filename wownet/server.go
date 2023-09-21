@@ -40,15 +40,13 @@ func (s *Server) Start() {
 		// 1.获取一个TCP的addr
 		addr, err := net.ResolveTCPAddr(s.IpVersion, fmt.Sprintf("%s:%d", s.Ip, s.Port))
 		if err != nil {
-			//TODO 增加日志
-			fmt.Println("服务器启动错误:", err)
+			utils.Logger.Error(fmt.Sprintf("服务器启动错误:%s", err))
 			return
 		}
 		// 2.监听服务器地址
 		listener, err := net.ListenTCP(s.IpVersion, addr)
 		if err != nil {
-			//TODO 日志
-			fmt.Println("监听服务器地址错误:", err)
+			utils.Logger.Error(fmt.Sprintf("监听服务器地址错误:%s", err))
 			return
 		}
 		fmt.Printf("服务器启动成功: 服务器名:%s\n", s.Name)
@@ -60,8 +58,7 @@ func (s *Server) Start() {
 			//如果客户端链接过来会返回
 			conn, err := listener.AcceptTCP()
 			if err != nil {
-				//TODO 日志
-				fmt.Printf("链接客户端错误:%s\n", err)
+				utils.Logger.Error(fmt.Sprintf("链接客户端错误:%s", err))
 				continue
 			}
 
@@ -103,7 +100,9 @@ func (s *Server) Server() {
 // 4.添加一个路由方法
 func (s *Server) AddRouter(msgId uint32, router wowiface.IRouter) {
 	s.MsgHandler.AddRouter(msgId, router)
-	fmt.Println("添加 Router 成功")
+	if utils.GlobalObject.Develop {
+		fmt.Println("添加 Router 成功")
+	}
 }
 
 // 初始化Server模块方法
@@ -138,7 +137,9 @@ func (s *Server) SetBeforeStopConn(hookFunc func(connection wowiface.IConnection
 // 调用[当创建连接后] Hook方法
 func (s *Server) CallAfterStartConn(conn wowiface.IConnection) {
 	if s.AfterStartConn != nil {
-		fmt.Println("---->调用[当创建连接后]方法")
+		if utils.GlobalObject.Develop {
+			fmt.Println("---->调用[当创建连接后]方法")
+		}
 		s.AfterStartConn(conn)
 	}
 }
@@ -146,7 +147,9 @@ func (s *Server) CallAfterStartConn(conn wowiface.IConnection) {
 // 调用[当断开连接前] Hook方法
 func (s *Server) CallBeforeStopConn(conn wowiface.IConnection) {
 	if s.BeforeStopConn != nil {
-		fmt.Println("---->调用[当断开连接前]方法")
+		if utils.GlobalObject.Develop {
+			fmt.Println("---->调用[当断开连接前]方法")
+		}
 		s.BeforeStopConn(conn)
 	}
 }

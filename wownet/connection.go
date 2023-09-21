@@ -63,31 +63,27 @@ func NewConnection(server wowiface.IServer, conn *net.TCPConn, connId uint32, ms
 
 // 链接的读业务方法
 func (c *Connection) StartReader() {
-	fmt.Println("[读 Goroutine 运行中...]")
+	if utils.GlobalObject.Develop {
+		fmt.Println("[读 Goroutine 运行中...]")
+	}
 	defer fmt.Println("[读Goroutine退出] 当前链接id:", c.ConnId, "..,远端地址:", c.Conn.RemoteAddr().String())
 	defer c.Stop()
 
 	for {
-		//读取客户端的数据到buf中,目前最大512字节
-		//buf := make([]byte, utils.GlobalObject.MaxPackageSize)
-		//_, err := c.Conn.Read(buf)
-		//if err != nil {
-		//	fmt.Println("读取客户端数据失败", err)
-		//	continue
 
 		// 创建一个拆包解包的对象
 		dp := NewDataPack()
 		//读取客户端的Msg Head二进制流 8个字节
 		headData := make([]byte, dp.GetHeadLen())
 		if _, err := io.ReadFull(c.GetTCPConnection(), headData); err != nil {
-			fmt.Println("读取 信息头 错误:", err)
+			utils.Logger.Error(fmt.Sprintf("读取 信息头 错误:%s", err))
 			break
 		}
 
 		//拆包,得到MsgId 和 MsgDataLen 放在一个Msg对象中
 		msg, err := dp.UnPack(headData)
 		if err != nil {
-			fmt.Println("[拆包头]信息错误", err)
+			utils.Logger.Error(fmt.Sprintf("[拆包头]信息错误:%s", err))
 			break
 		}
 
@@ -96,7 +92,7 @@ func (c *Connection) StartReader() {
 		if msg.GetMsgLen() > 0 {
 			data = make([]byte, msg.GetMsgLen())
 			if _, err := io.ReadFull(c.GetTCPConnection(), data); err != nil {
-				fmt.Println("读取 [消息包体] 错误", err)
+				utils.Logger.Error(fmt.Sprintf("读取 [消息包体] 错误:%s", err))
 			}
 		}
 
@@ -124,7 +120,9 @@ func (c *Connection) StartReader() {
 
 // 写消息的Goroutine, 专门发送给客户端消息的方法
 func (c *Connection) StartWriter() {
-	fmt.Println("[写 Goroutine 运行中...]")
+	if utils.GlobalObject.Develop {
+		fmt.Println("[写 Goroutine 运行中...]")
+	}
 	defer fmt.Println("[写Goroutine退出] 当前链接id:", c.ConnId, "..,远端地址:", c.Conn.RemoteAddr().String())
 	//阻塞,等待channel的消息,然后进行写给客户端
 	for {
@@ -132,7 +130,7 @@ func (c *Connection) StartWriter() {
 		case data := <-c.msgChan:
 			//有数据要写给客户端
 			if _, err := c.Conn.Write(data); err != nil {
-				fmt.Println("发送消息数据出错:", err)
+				utils.Logger.Error(fmt.Sprintf("发送消息数据出错:%s", err))
 				return
 			}
 		case <-c.ExitChan:
@@ -209,7 +207,7 @@ func (c *Connection) SendMsg(msgId uint32, data []byte) error {
 	//进行包的组装(封包),最终格式为: |MsgDataLen|MsgId|Data|
 	binaryMsg, err := dp.Pack(NewMsgPackage(msgId, data))
 	if err != nil {
-		fmt.Println("数据包封装失败,产生错误:", err)
+		utils.Logger.Error(fmt.Sprintf("数据包封装失败,产生错误:%s", err))
 		return errors.New("数据包封装失败")
 	}
 
