@@ -39,13 +39,31 @@ func (s *HelloRouter) Handle(request wowiface.IRequest) {
 	}
 }
 
+// 创建链接之后的钩子函数
+func DoConnectionBegin(conn wowiface.IConnection) {
+	fmt.Println("===>创建链接钩子已经调用")
+	if err := conn.SendMsg(202, []byte("创建链接钩子已经调用")); err != nil {
+		fmt.Println(err)
+	}
+}
+
+// 链接断开前的钩子函数
+func DoConnectionLost(conn wowiface.IConnection) {
+	fmt.Println("===>关闭连接钩子已经调用,关闭链接Id=", conn.GetConnId())
+}
+
 func main() {
 	// 1. 创建server句柄
 	s := wownet.NewServer("wow-launch")
-	// 2. 给当前框架添加自定义router
+
+	// 2. 注册连接的Hook方法
+	s.SetAfterStartConn(DoConnectionBegin)
+	s.SetBeforeStopConn(DoConnectionLost)
+
+	// 3. 给当前框架添加自定义router
 	s.AddRouter(0, &PingRouter{})
 	s.AddRouter(1, &HelloRouter{})
 
-	// 3. 启动服务器
+	// 4. 启动服务器
 	s.Server()
 }

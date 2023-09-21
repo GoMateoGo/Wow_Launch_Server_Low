@@ -20,6 +20,10 @@ type Server struct {
 	MsgHandler wowiface.IMsgHandle
 	//该Server的连接管理器
 	ConnMgr wowiface.IConnManager
+	//创建连接之后的Hook方法
+	AfterStartConn func(conn wowiface.IConnection)
+	//断开连接之前的Hook方法
+	BeforeStopConn func(conn wowiface.IConnection)
 }
 
 // 1.启动服务器
@@ -119,4 +123,30 @@ func NewServer(name string) wowiface.IServer {
 // 获取当前Server的链接管理器
 func (s *Server) GetConnMgr() wowiface.IConnManager {
 	return s.ConnMgr
+}
+
+// 注册[当创建连接后] Hook方法
+func (s *Server) SetAfterStartConn(hookFunc func(connection wowiface.IConnection)) {
+	s.AfterStartConn = hookFunc
+}
+
+// 注册[当断开连接前] Hook方法
+func (s *Server) SetBeforeStopConn(hookFunc func(connection wowiface.IConnection)) {
+	s.BeforeStopConn = hookFunc
+}
+
+// 调用[当创建连接后] Hook方法
+func (s *Server) CallAfterStartConn(conn wowiface.IConnection) {
+	if s.AfterStartConn != nil {
+		fmt.Println("---->调用[当创建连接后]方法")
+		s.AfterStartConn(conn)
+	}
+}
+
+// 调用[当断开连接前] Hook方法
+func (s *Server) CallBeforeStopConn(conn wowiface.IConnection) {
+	if s.BeforeStopConn != nil {
+		fmt.Println("---->调用[当断开连接前]方法")
+		s.BeforeStopConn(conn)
+	}
 }
