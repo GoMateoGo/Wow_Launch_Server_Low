@@ -5,11 +5,13 @@ import (
 	"gitee.com/mrmateoliu/wow_launch.git/wowiface"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 	"os"
 )
 
 var (
 	Logger *zap.SugaredLogger
+	DB     *gorm.DB
 )
 
 /*
@@ -34,9 +36,9 @@ type GlobalObj struct {
 	LogMaxBackups    uint32           //保留旧文件的最大个数
 	LogMaxAge        uint32           //保留旧文件的最大天数
 	Develop          bool             //是否为开发者模式
-	Dsn1             string           //数据库连接 1
-	maxIdleConn      uint32           //最多空闲链接数
-	maxOpenConn      uint32           //最多打开连接数
+	DbDsn1           string           //数据库连接 1
+	DbmaxIdleConn    int              //最多空闲链接数
+	DbmaxOpenConn    int              //最多打开连接数
 }
 
 /*
@@ -73,9 +75,9 @@ func init() {
 		LogMaxBackups:    10,   //保留旧文件的最大个数
 		LogMaxAge:        90,   //保留旧文件的最大天数
 		Develop:          true, //是否为开发者模式
-		Dsn1:             "root:root@tcp(127.0.0.1:3307)/wow_launch?charset=utf8mb4&parseTime=True&loc=Local",
-		maxIdleConn:      100,
-		maxOpenConn:      100,
+		DbDsn1:           "root:root@tcp(127.0.0.1:3307)/wow_launch?charset=utf8mb4&parseTime=True&loc=Local",
+		DbmaxIdleConn:    100, //最多空闲链接数
+		DbmaxOpenConn:    100, //最多打开连接数
 	}
 
 	//应该尝试从conf/xxx.json去加载一些用户自定义参数
