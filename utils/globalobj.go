@@ -54,8 +54,8 @@ func init() {
 		Version:          "v0.1",
 		MaxConn:          1000,
 		MaxPackageSize:   4096,
-		WorkerPoolSize:   10,
-		MaxWorkerTaskLen: 1024,
+		WorkerPoolSize:   10,   //表示整个workerPool的数量
+		MaxWorkerTaskLen: 1024, //每个worker对应消息队列(channel)的最大的数量值
 	}
 
 	//应该尝试从conf/xxx.json去加载一些用户自定义参数
