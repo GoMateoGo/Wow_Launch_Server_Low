@@ -16,6 +16,18 @@ type IConnection interface {
 	// 获取当前链接模块的链接id
 	GetConnId() uint32
 
+	//设置客户端Mac地址
+	SetConnMac(mac string)
+
+	//设置客户端系统
+	SetConnOs(os string)
+
+	//获取客户端Mac地址
+	GetConnMac() string
+
+	//获取客户端系统
+	GetConnOs() string
+
 	// 获取远程客户端的 tcp状态 ip和port
 	RemoteAddr() net.Addr
 

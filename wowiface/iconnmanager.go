@@ -15,4 +15,6 @@ type IConnManager interface {
 	Len() int
 	//清楚并停止所有链接
 	ClearConn()
+	//获取服务端管理UI自身链接
+	GetServerOwner() (IConnection, error)
 }

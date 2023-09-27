@@ -24,6 +24,12 @@ type Connection struct {
 	// 链接的id
 	ConnId uint32
 
+	// 连接Mac地址
+	ConnMac string
+
+	//客户端系统
+	ConnOs string
+
 	//当前的链接状态
 	IsClosed bool
 
@@ -54,6 +60,8 @@ func NewConnection(server wowiface.IServer, conn *net.TCPConn, connId uint32, ms
 		Conn:      conn,
 		ConnId:    connId,
 		MsgHandle: msgHandle,
+		ConnMac:   "",
+		ConnOs:    "",
 		IsClosed:  false,
 		msgChan:   make(chan []byte),
 		ExitChan:  make(chan bool, 1),
@@ -146,13 +154,16 @@ func (c *Connection) StartWriter() {
 
 // 启动链接 让当前的链接准备开始工作
 func (c *Connection) Start() {
-	fmt.Println("链接成功, 当前链接id:", c.ConnId)
-
+	if utils.GlobalObject.Develop {
+		fmt.Println("链接成功, 当前链接id:", c.ConnId)
+	}
 	//启动从当前连接的读数据业务
 	go c.StartReader()
 
 	//启动从当前连接写数据的业务
 	go c.StartWriter()
+
+	//启动心跳包业务
 
 	//按照开发者传递进来的 创建链接之后需要调用的处理业务, 执行对应的Hook函数
 	c.TcpServer.CallAfterStartConn(c)
@@ -160,7 +171,12 @@ func (c *Connection) Start() {
 
 // 停止链接 结束当前链接的工作
 func (c *Connection) Stop() {
-	fmt.Println("当前链接已停止...停止id", c.ConnId)
+	if utils.GlobalObject.Develop {
+		fmt.Println("当前链接已停止...停止id", c.ConnId)
+	}
+
+	//调用开发者注册的关闭连接之前的Hook函数
+	c.TcpServer.CallBeforeStopConn(c)
 
 	//如果当前链接已经关闭
 	if c.IsClosed == true {
@@ -246,4 +262,24 @@ func (c *Connection) RemoveProperty(key string) {
 	defer c.propertyLock.Unlock()
 
 	delete(c.property, key)
+}
+
+// 设置客户端Mac地址
+func (c *Connection) SetConnMac(mac string) {
+	c.ConnMac = mac
+}
+
+// 设置客户端系统
+func (c *Connection) SetConnOs(os string) {
+	c.ConnOs = os
+}
+
+// 获取客户端Mac地址
+func (c *Connection) GetConnMac() string {
+	return c.ConnMac
+}
+
+// 获取客户端系统
+func (c *Connection) GetConnOs() string {
+	return c.ConnOs
 }
