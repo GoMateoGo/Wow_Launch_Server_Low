@@ -15,7 +15,6 @@ import (
 type ConnManager struct {
 	connections map[uint32]wowiface.IConnection //管理的链接信息集合
 	connLock    sync.RWMutex                    //保护连接集合的读写锁
-
 }
 
 // 创建当前链接的方法
@@ -33,7 +32,9 @@ func (connMgr *ConnManager) Add(conn wowiface.IConnection) {
 
 	//将conn加入到ConnManager中
 	connMgr.connections[conn.GetConnId()] = conn
-	fmt.Println("添加链接完成链接Id", conn.GetConnId(), "当前链接数量:", connMgr.Len())
+	if utils.GlobalObject.Develop {
+		fmt.Println("添加链接完成链接Id", conn.GetConnId(), "当前链接数量:", connMgr.Len())
+	}
 }
 
 // 删除链接

@@ -7,6 +7,7 @@ import (
 	"gitee.com/mrmateoliu/wow_launch.git/wowiface"
 	"io"
 	"net"
+	"strconv"
 	"sync"
 )
 
@@ -42,6 +43,10 @@ type Connection struct {
 	propertyLock sync.RWMutex
 }
 
+func SendMsgToClient(connId, msgId uint32, msgData []byte) {
+
+}
+
 // 初始化链接模块的方法
 func NewConnection(server wowiface.IServer, conn *net.TCPConn, connId uint32, msgHandle wowiface.IMsgHandle) *Connection {
 	c := &Connection{
@@ -70,7 +75,6 @@ func (c *Connection) StartReader() {
 	defer c.Stop()
 
 	for {
-
 		// 创建一个拆包解包的对象
 		dp := NewDataPack()
 		//读取客户端的Msg Head二进制流 8个字节
@@ -164,9 +168,6 @@ func (c *Connection) Stop() {
 	}
 	c.IsClosed = true
 
-	//调用开发者注册的关闭连接之前的Hook函数
-	c.TcpServer.CallBeforeStopConn(c)
-
 	//应该关闭socekt链接
 	c.Conn.Close()
 
@@ -199,7 +200,7 @@ func (c *Connection) RemoteAddr() net.Addr {
 // 提供一个SendMsg方法, 将要发送给客户端的数据进行封包,在发送
 func (c *Connection) SendMsg(msgId uint32, data []byte) error {
 	if c.IsClosed == true {
-		return errors.New("链接已关闭,无需发送消息")
+		return errors.New("链接已关闭,无需发送消息" + strconv.Itoa(int(msgId)))
 	}
 	//将data进行封包 |MsgDatalen|MsgId|MsgData|
 	dp := NewDataPack()
