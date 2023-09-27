@@ -86,9 +86,10 @@ func main() {
 
 	// 0. 初始化配置
 	SysInit()
-	// 1. 创建server句柄
-	s := wownet.NewServer("wow-launch")
 
+	// 1. 创建SocketServer句柄
+	s := wownet.NewServer()
+	utils.SServer = s
 	// 2. 注册连接的Hook方法
 	s.SetAfterStartConn(DoConnectionBegin)
 	s.SetBeforeStopConn(DoConnectionLost)

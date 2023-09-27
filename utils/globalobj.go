@@ -12,6 +12,7 @@ import (
 var (
 	Logger *zap.SugaredLogger
 	DB     *gorm.DB
+	SServer wowiface.IServer
 )
 
 /*
