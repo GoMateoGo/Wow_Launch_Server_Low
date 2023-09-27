@@ -9,15 +9,15 @@ import (
 	"time"
 )
 
-func InitDB() (*gorm.DB, error) {
+func InitAuthDB() (*gorm.DB, error) {
 
 	logMode := logger.Info
 	if !utils.GlobalObject.Develop {
 		logMode = logger.Error
 	}
-	db, err := gorm.Open(mysql.Open(utils.GlobalObject.DbDsn1), &gorm.Config{
+	db, err := gorm.Open(mysql.Open(utils.GlobalObject.AuthDsn), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
-			TablePrefix:   "sys_",
+			TablePrefix:   "",
 			SingularTable: true,
 			//NameReplacer:        nil,
 			//NoLowerCase:         false,
@@ -29,12 +29,12 @@ func InitDB() (*gorm.DB, error) {
 		return nil, err
 	}
 	sqlDB, _ := db.DB()
-	sqlDB.SetMaxIdleConns(utils.GlobalObject.DbmaxIdleConn) // 最多空闲链接数
-	sqlDB.SetMaxOpenConns(utils.GlobalObject.DbmaxOpenConn) // 最多打开连接数
-	sqlDB.SetConnMaxLifetime(time.Hour * 24)                //生命周期为1天
+	sqlDB.SetMaxIdleConns(utils.GlobalObject.AuthMaxIdleConn) // 最多空闲链接数
+	sqlDB.SetMaxOpenConns(utils.GlobalObject.AuthMaxOpenConn) // 最多打开连接数
+	sqlDB.SetConnMaxLifetime(time.Hour * 24)                  //生命周期为1天
 
 	err = db.AutoMigrate(
-	//&model.UserBaseData{},
+	//&sqlhandle.UserBaseData{},
 	)
 
 	return db, nil
