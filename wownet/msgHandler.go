@@ -56,7 +56,6 @@ func (mh *MsgHandle) AddRouter(msgId uint32, router wowiface.IRouter) {
 	if utils.GlobalObject.Develop {
 		fmt.Println("添加APi消息Id:", msgId, "成功!")
 	}
-
 }
 
 // 启动一个Worker工作池 (开启工作池动作只能发生一次,最多只能有一个工作池)
@@ -93,9 +92,9 @@ func (mh *MsgHandle) SendMsgToTaskQueue(request wowiface.IRequest) {
 	//----基本的平均分配的轮询法则
 	workerId := request.GetConnection().GetConnId() % mh.WorkerPoolSize
 	if utils.GlobalObject.Develop {
-		fmt.Println("新增一个链接Id:", request.GetConnection().GetConnId(),
+		fmt.Println("当前链接Id:", request.GetConnection().GetConnId(),
 			"消息请求Id:", request.GetMsgId(),
-			"到工作池内的工作Id", workerId)
+			"所在工作池Id", workerId)
 	}
 	//2. 将消息发送给对应的worker的taskQueue即可.
 	mh.TaskQueue[workerId] <- request

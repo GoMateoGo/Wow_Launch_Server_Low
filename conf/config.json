@@ -1,16 +1,14 @@
 {
-  "Develop": false,
+  "Develop": true,
   "Name": "wow launch Server App",
   "Host": "127.0.0.1",
-  "TcpPort": 7777,
-  "MaxConn": 2,
+  "TcpPort": 8888,
+  "HttpPort": 9999,
+  "MaxConn": 20,
   "Version":"v0.1",
   "MaxPackageSize": 4096,
   "WorkerPoolSize": 10,
-  "LogMaxSize": 1,
-  "MaxBackups": 10,
-  "MaxAge": 90,
-  "dsn" : "root:root@tcp(127.0.0.1:3307)/z_gorm?charset=utf8mb4&parseTime=True&loc=Local",
-  "maxIdleConn": 100 ,
-  "maxOpenConn": 100
+  "AuthDsn" : "root:root@tcp(127.0.0.1:3307)/new_auth?charset=utf8&parseTime=True&loc=Local",
+  "CharaDsn" : "root:root@tcp(127.0.0.1:3307)/z_gorm?charset=utf8mb4&parseTime=True&loc=Local",
+  "BanSql": false
 }
