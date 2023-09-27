@@ -5,6 +5,7 @@ import (
 	"gitee.com/mrmateoliu/wow_launch.git/utils"
 	"gitee.com/mrmateoliu/wow_launch.git/wowiface"
 	"net"
+	"time"
 )
 
 type Server struct {
@@ -28,7 +29,7 @@ type Server struct {
 
 // 1.启动服务器
 func (s *Server) Start() {
-	fmt.Printf("[配置信息]:\n 服务器名称:%s\n Ip地址:%s\n 端口号:%d\n",
+	fmt.Printf("[服务器配置信息]:\n 服务器名称:%s\n Ip地址:%s\n 端口号:%d\n",
 		utils.GlobalObject.Name, utils.GlobalObject.Host, utils.GlobalObject.TcpPort)
 	fmt.Printf(" 版本:%s\n 客户端最大链接数:%d\n 最大数据包尺寸:%d\n", utils.GlobalObject.Version, utils.GlobalObject.MaxConn, utils.GlobalObject.MaxPackageSize)
 
@@ -51,6 +52,13 @@ func (s *Server) Start() {
 		fmt.Println("---------->服务器启动成功<----------")
 		var cid uint32
 		cid = 0
+
+		go func() {
+			for {
+				fmt.Println("当前用户数量:", s.GetConnMgr().Len())
+				time.Sleep(5 * time.Second)
+			}
+		}()
 
 		// 3.阻塞等待客户端链接,处理客户端链接业务(读/写)
 		for {
@@ -105,7 +113,7 @@ func (s *Server) AddRouter(msgId uint32, router wowiface.IRouter) {
 }
 
 // 初始化Server模块方法
-func NewServer(name string) wowiface.IServer {
+func NewServer() wowiface.IServer {
 	s := &Server{
 		Name:       utils.GlobalObject.Name,
 		IpVersion:  "tcp4",
