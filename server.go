@@ -78,6 +78,12 @@ func DoConnectionLost(conn wowiface.IConnection) {
 }
 
 func main() {
+	// --------------启用http服务用于下载------------------------------------------
+	dhttp.RunHttp()
+
+	<-dhttp.SChan //阻塞等待管理UI开启
+	//--------------------------------------------------------------------------
+
 	// 0. 初始化配置
 	SysInit()
 	// 1. 创建server句柄
