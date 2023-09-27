@@ -36,13 +36,11 @@ func DoConnectionLost(conn wowiface.IConnection) {
 	if utils.GlobalObject.Develop {
 		fmt.Println("===>关闭连接钩子已经调用,关闭链接Id=", conn.GetConnId())
 	}
-	// --------------------------------------------------------
-	// - 测试 链接属性读取
-	if re, err := conn.GetProperty("Name"); err == nil {
-		fmt.Println(re)
+
+	serverOwner, err := utils.SServer.GetConnMgr().GetServerOwner()
+	if err != nil {
+		return
 	}
-	if re, err := conn.GetProperty("网址"); err == nil {
-		fmt.Println(re)
 
 	//通知管理UI断开连接
 	if err := serverOwner.SendMsg(105, []byte(strconv.Itoa(int(conn.GetConnId())))); err != nil {
@@ -76,9 +74,7 @@ func main() {
 	s.SetBeforeStopConn(DoConnectionLost)
 
 	// 3. 给当前框架添加自定义router
-	s.AddRouter(0, &PingRouter{})
-	s.AddRouter(1, &HelloRouter{})
-
+	socket_router.RegisterRouter(s)
 	// 4. 启动服务器
 	s.Server()
 }
@@ -89,11 +85,16 @@ func SysInit() {
 	utils.Logger = conf.InitLogger()
 
 	// ========================================================
+	// = 读取ban.txt文件到内存中
+	conf.ReadBanList()
+
+	// ========================================================
 	// =初始化数据链接
-	db, err := conf.InitDB()
-	utils.DB = db
-	if err != nil {
-		fmt.Println("数据库连接失败请检查数据库配置....")
-		//panic("数据库连接失败请检查数据库配置....")
+	if db, err := conf.InitAuthDB(); err != nil {
+		if err != nil {
+			fmt.Println("账号数据库连接失败...")
+		}
+	} else {
+		utils.AuthDB = db
 	}
 }
