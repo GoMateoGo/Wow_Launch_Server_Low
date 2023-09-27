@@ -64,12 +64,30 @@ func (connMgr *ConnManager) Get(connId uint32) (wowiface.IConnection, error) {
 	}
 }
 
+// 获取服务端管理UI自身链接
+func (connMgr *ConnManager) GetServerOwner() (wowiface.IConnection, error) {
+	//保护共享资源,  加读锁
+	connMgr.connLock.RLock()
+	defer connMgr.connLock.RUnlock()
+
+	mac, err := utils.GetMACAddress()
+	if err != nil {
+		return nil, errors.New("没有找到在线管理员")
+	}
+	for _, v := range connMgr.connections {
+		if v.GetConnMac() == mac {
+			return v, nil
+		}
+	}
+	return nil, errors.New("没有找到在线管理员")
+}
+
 // 得到当前链接总数
 func (connMgr *ConnManager) Len() int {
 	return len(connMgr.connections)
 }
 
-// 清楚并停止所有链接
+// 清除并停止所有链接
 func (connMgr *ConnManager) ClearConn() {
 	//保护共享资源,  加写锁
 	connMgr.connLock.Lock()
