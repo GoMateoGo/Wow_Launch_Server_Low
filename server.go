@@ -3,52 +3,21 @@ package main
 import (
 	"fmt"
 	"gitee.com/mrmateoliu/wow_launch.git/conf"
+	"gitee.com/mrmateoliu/wow_launch.git/dhttp"
+	"gitee.com/mrmateoliu/wow_launch.git/socket_router"
 	"gitee.com/mrmateoliu/wow_launch.git/utils"
 	"gitee.com/mrmateoliu/wow_launch.git/wowiface"
 	"gitee.com/mrmateoliu/wow_launch.git/wownet"
+	"strconv"
 )
-
-// ping测试, 自定义路由
-type PingRouter struct {
-	wownet.BaseRouter
-}
-
-func (s *PingRouter) Handle(request wowiface.IRequest) {
-	if utils.GlobalObject.Develop {
-		fmt.Println("Call Router Handle")
-		//先读取客户端的数据,在回写ping.ping.ping
-		fmt.Println("接受到的消息:", request.GetMsgId())
-		fmt.Println("接受到的包体:", string(request.GetData()))
-	}
-
-	err := request.GetConnection().SendMsg(200, []byte("ping...ping...ping"))
-	if err != nil {
-		fmt.Println(err)
-	}
-}
-
-type HelloRouter struct {
-	wownet.BaseRouter
-}
-
-func (s *HelloRouter) Handle(request wowiface.IRequest) {
-	if utils.GlobalObject.Develop {
-		fmt.Println("call router HelloWow")
-		fmt.Println("接受到的消息Id:", request.GetMsgId())
-		fmt.Println("接受到的包体内容:", string(request.GetData()))
-	}
-	err := request.GetConnection().SendMsg(201, []byte("hello..Wow"))
-	if err != nil {
-		fmt.Println(err)
-	}
-}
 
 // 创建链接之后的钩子函数
 func DoConnectionBegin(conn wowiface.IConnection) {
 	if utils.GlobalObject.Develop {
 		fmt.Println("===>创建链接钩子已经调用")
 	}
-	if err := conn.SendMsg(202, []byte("创建链接钩子已经调用")); err != nil {
+	//获取用户mac地址和os版本
+	if err := conn.SendMsg(101, []byte("GetClientInfo")); err != nil {
 		fmt.Println(err)
 	}
 
@@ -74,7 +43,19 @@ func DoConnectionLost(conn wowiface.IConnection) {
 	}
 	if re, err := conn.GetProperty("网址"); err == nil {
 		fmt.Println(re)
+
+	//通知管理UI断开连接
+	if err := serverOwner.SendMsg(105, []byte(strconv.Itoa(int(conn.GetConnId())))); err != nil {
+		fmt.Println(err)
 	}
+	// --------------------------------------------------------
+	// - 测试 链接属性读取
+	//if re, err := conn.GetProperty("Name"); err == nil {
+	//	fmt.Println(re)
+	//}
+	//if re, err := conn.GetProperty("网址"); err == nil {
+	//	fmt.Println(re)
+	//}
 }
 
 func main() {
