@@ -2,16 +2,19 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"gitee.com/mrmateoliu/wow_launch.git/wowiface"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
+	"net"
 	"os"
+	"strings"
 )
 
 var (
-	Logger *zap.SugaredLogger
-	DB     *gorm.DB
+	Logger  *zap.SugaredLogger
+	AuthDB  *gorm.DB
+	SelfMac string
 	SServer wowiface.IServer
 )
 
@@ -27,6 +30,7 @@ type GlobalObj struct {
 	TcpServer        wowiface.IServer //当前全局的Server对象
 	Host             string           //当前服务器主机监听的IP
 	TcpPort          int              //当前服务器主机监听的端口号
+	HttpPort         int              //http服务器端口
 	Name             string           //当前服务器的名称
 	Version          string           //当前的版本号
 	MaxConn          int              //当前服务器主机允许的最大连接数
@@ -37,9 +41,10 @@ type GlobalObj struct {
 	LogMaxBackups    uint32           //保留旧文件的最大个数
 	LogMaxAge        uint32           //保留旧文件的最大天数
 	Develop          bool             //是否为开发者模式
-	DbDsn1           string           //数据库连接 1
-	DbmaxIdleConn    int              //最多空闲链接数
-	DbmaxOpenConn    int              //最多打开连接数
+	AuthDsn          string           //数据库连接 1
+	AuthMaxIdleConn  int              //最多空闲链接数
+	AuthMaxOpenConn  int              //最多打开连接数
+	BanSql           bool             //是否也禁用数据库(账号)ip地址,需要链接数据库
 }
 
 /*
@@ -64,8 +69,9 @@ func (g *GlobalObj) Reload() {
 func init() {
 	//如果配置文件没有加载,先生成默认
 	GlobalObject = &GlobalObj{
-		Host:             viper.GetString("server.Host"),
+		Host:             "127.0.0.1",
 		TcpPort:          8999,
+		HttpPort:         8888, //http服务器
 		Name:             "wow_launch_App",
 		Version:          "v0.1",
 		MaxConn:          1000,
@@ -76,11 +82,38 @@ func init() {
 		LogMaxBackups:    10,   //保留旧文件的最大个数
 		LogMaxAge:        90,   //保留旧文件的最大天数
 		Develop:          true, //是否为开发者模式
-		DbDsn1:           "root:root@tcp(127.0.0.1:3307)/wow_launch?charset=utf8mb4&parseTime=True&loc=Local",
-		DbmaxIdleConn:    100, //最多空闲链接数
-		DbmaxOpenConn:    100, //最多打开连接数
+		AuthDsn:          "root:root@tcp(127.0.0.1:3307)/wow_launch?charset=utf8mb4&parseTime=True&loc=Local",
+		AuthMaxIdleConn:  100,   //最多空闲链接数
+		AuthMaxOpenConn:  100,   //最多打开连接数
+		BanSql:           false, //是否也禁用数据库(账号)ip地址,需要链接数据库
 	}
 
 	//应该尝试从conf/xxx.json去加载一些用户自定义参数
 	GlobalObject.Reload()
+}
+
+// 获取本机Mac地址
+func GetMACAddress() (string, error) {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return "", fmt.Errorf("无法获取网络接口: %v", err)
+	}
+
+	for _, iface := range interfaces {
+		if iface.Flags&net.FlagUp != 0 && iface.Flags&net.FlagLoopback == 0 {
+			addrs, err := iface.Addrs()
+			if err != nil {
+				return "", fmt.Errorf("无法获取网卡地址 %s: %v", iface.Name, err)
+			}
+
+			for _, addr := range addrs {
+				if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+					hwAddr := iface.HardwareAddr.String()
+					return strings.ToUpper(hwAddr), nil
+				}
+			}
+		}
+	}
+
+	return "", fmt.Errorf("找不到有效的MAC地址")
 }
