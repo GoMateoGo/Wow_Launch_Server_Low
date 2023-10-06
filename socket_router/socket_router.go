@@ -22,6 +22,71 @@ func RegisterRouter(s wowiface.IServer) {
 	s.AddRouter(103, &BanClient{Server: s})
 	//解封Ban
 	s.AddRouter(104, &RemoveBanClient{})
+	//注册账号
+	s.AddRouter(1, &RegisterAccount{})
+	//修改/找回密码
+	s.AddRouter(2, &ChangePassword{})
+}
+
+type ChangePassword struct {
+	wownet.BaseRouter
+}
+
+func (s ChangePassword) AfterHandle(request wowiface.IRequest) {
+	var userName string   //账号
+	var newPwd string     //新密码
+	var secureCode string //安全码
+	msgDat := request.GetData()
+	parts := strings.Split(string(msgDat), "#")
+	if len(parts) == 3 {
+		userName = parts[0]
+		newPwd = parts[1]
+		secureCode = parts[2]
+	} else {
+		utils.Logger.Error(fmt.Sprintf("修改/找回密码失败,对方客户端ip:%s", request.GetConnection().RemoteAddr()))
+		return
+	}
+	//修改/找回密码
+	user := sqlhandle.NewUserData(userName, newPwd, secureCode)
+	err := user.ChangePassword()
+	if err != nil {
+		err = request.GetConnection().SendMsg(1, []byte(err.Error())) //注册结果
+	}
+}
+
+type RegisterAccount struct {
+	wownet.BaseRouter
+}
+
+func (s RegisterAccount) AfterHandle(request wowiface.IRequest) {
+	var userName string   //账号
+	var password string   //密码
+	var secureCode string //安全码
+
+	msgDat := request.GetData()
+	parts := strings.Split(string(msgDat), "#")
+	if len(parts) == 3 {
+		userName = parts[0]
+		password = parts[1]
+		secureCode = parts[2]
+	} else {
+		utils.Logger.Error(fmt.Sprintf("注册账号失败,对方客户端ip:%s", request.GetConnection().RemoteAddr()))
+		return
+	}
+	cIp := request.GetConnection().RemoteAddr().String()
+	// 使用 ":" 分割字符串
+	partIp := strings.Split(cIp, ":")
+	if len(partIp) >= 1 {
+		cIp = partIp[0]
+	} else {
+		fmt.Println("解析客户端ip错误.")
+	}
+	//注册账号密码
+	user := sqlhandle.NewUserData(userName, password, secureCode)
+	err := user.CreateAccount(cIp)
+	if err != nil {
+		err = request.GetConnection().SendMsg(1, []byte(err.Error())) //注册结果
+	}
 }
 
 // 解封Ban客户端
@@ -170,7 +235,7 @@ func (s *HandClientConnRouter) AfterHandle(request wowiface.IRequest) {
 
 	result := strconv.Itoa(int(request.GetConnection().GetConnId())) + "#" + cIp + "#" + mac + "#" + Os
 
-	//发送信息给0号客户端
+	//发送信息给服务端管理UI
 	err = conn.SendMsg(102, []byte(result))
 	if err != nil {
 		fmt.Println("发送给服务端UI消息错误:", err)
