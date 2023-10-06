@@ -56,7 +56,7 @@ func (s *Server) Start() {
 		go func() {
 			for {
 				fmt.Println("当前用户数量:", s.GetConnMgr().Len())
-				time.Sleep(5 * time.Second)
+				time.Sleep(30 * time.Second)
 			}
 		}()
 

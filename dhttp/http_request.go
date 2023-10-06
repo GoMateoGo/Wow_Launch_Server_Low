@@ -13,8 +13,11 @@ import (
 var sw = false
 
 // 处理Post请求
-func HandGetRequest(w http.ResponseWriter, r *http.Request, wg *sync.WaitGroup) {
-	defer wg.Done()
+func HandPostRequest(w http.ResponseWriter, r *http.Request) {
+	if r.Body == nil {
+		http.Error(w, "请求体为空", http.StatusBadRequest)
+		return
+	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -42,7 +45,6 @@ func HandGetRequest(w http.ResponseWriter, r *http.Request, wg *sync.WaitGroup) 
 			//说明是服务端后台管理UI发送的信号,这里不需要下载
 			SChan <- true
 			sw = true
-			w.WriteHeader(http.StatusOK)
 		}
 		return
 	}
@@ -52,27 +54,144 @@ func HandGetRequest(w http.ResponseWriter, r *http.Request, wg *sync.WaitGroup) 
 		if sw == true {
 			os.Exit(0)
 		}
+	}
+
+	http.Error(w, "无效的请求", http.StatusBadRequest)
+}
+
+func HandMd5CheckRequest(w http.ResponseWriter, r *http.Request) {
+	if r.Body == nil {
+		http.Error(w, "body为空", http.StatusInternalServerError)
+		return
+	}
+	fmt.Println("post请求uri", strings.Contains(r.URL.Path, "/check"))
+	if !strings.Contains(r.URL.Path, "/check") {
+		http.Error(w, "请求路径错误", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusBadRequest)
-	return
-	//filePath := "down_load/1.txt" // 相对路径
-	//fmt.Println(filePath)
-	//file, err := os.Open(filePath)
-	//if err != nil {
-	//	http.Error(w, fmt.Sprintf("未找到指定文件: %s", err), http.StatusInternalServerError)
-	//	return
-	//}
-	//defer file.Close()
-	//
-	//// 设置响应头，指定文件名
-	//w.Header().Set("Content-Disposition", "attachment; filename=1.txt")
-	//
-	//// 将文件内容复制到响应主体
-	//_, err = io.Copy(w, file)
-	//if err != nil {
-	//	http.Error(w, fmt.Sprintf("无法复制文件内容: %s", err), http.StatusInternalServerError)
-	//	return
-	//}
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "读取body失败", http.StatusInternalServerError)
+	}
+	defer r.Body.Close()
+
+	fmt.Println("md5:", string(body))
+	res := utils.CheckMD5(string(body))
+	if res {
+		return
+	} else {
+		http.Error(w, "md5不符合,进行更新", http.StatusBadRequest)
+	}
+}
+
+var mutex sync.Mutex // 创建一个互斥锁
+func HandDownLoadRequest(w http.ResponseWriter, r *http.Request) {
+
+	rootDir := "down_load" // 设置下载根目录
+	zipFileName := "downloaded.zip"
+
+	// 获取临时ZIP文件的大小
+	if fileInfo, err := os.Stat(zipFileName); err == nil {
+		// 设置HTTP头部，告诉浏览器该文件是一个ZIP文件
+		w.Header().Set("Content-Type", "application/zip")
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", zipFileName))
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", fileInfo.Size()))
+
+		// 发送ZIP文件给客户端
+		http.ServeFile(w, r, zipFileName)
+
+		return
+	}
+
+	mutex.Lock()         // 加锁
+	defer mutex.Unlock() // 解锁
+	// 创建一个临时ZIP文件
+	zipFile, err := os.Create(zipFileName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	zipWriter := zip.NewWriter(zipFile)
+
+	// 递归遍历目录并将文件和文件夹打包
+	err = filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// 计算相对于根目录的路径
+		relPath, err := filepath.Rel(rootDir, path)
+		if err != nil {
+			return err
+		}
+
+		// 使用斜杠分隔符确保路径在不同操作系统上都有效
+		relPath = strings.ReplaceAll(relPath, string(filepath.Separator), "/")
+
+		if info.IsDir() {
+			// 不需要在ZIP文件中创建文件夹，只需在路径后面添加斜杠
+			relPath += "/"
+		} else {
+			// 创建ZIP文件中的文件
+			zipFile, err := zipWriter.Create(relPath)
+			if err != nil {
+				return err
+			}
+
+			// 打开文件并将其内容写入ZIP文件
+			file, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+
+			_, err = io.Copy(zipFile, file)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// 刷新临时ZIP文件，确保所有数据都写入磁盘
+	err = zipWriter.Flush()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// 关闭临时ZIP文件，确保文件写入磁盘
+	err = zipWriter.Close()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// 获取临时ZIP文件的大小
+	fileInfo, err := os.Stat(zipFileName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// 关闭临时ZIP文件句柄
+	err = zipFile.Close()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// 设置HTTP头部，告诉浏览器该文件是一个ZIP文件
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", zipFileName))
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", fileInfo.Size()))
+
+	// 发送ZIP文件给客户端
+	http.ServeFile(w, r, zipFileName)
 }
