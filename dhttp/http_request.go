@@ -1,10 +1,13 @@
 package dhttp
 
 import (
+	"archive/zip"
+	"fmt"
 	"gitee.com/mrmateoliu/wow_launch.git/utils"
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 )

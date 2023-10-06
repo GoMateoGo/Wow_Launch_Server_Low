@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"gitee.com/mrmateoliu/wow_launch.git/model"
 	"gitee.com/mrmateoliu/wow_launch.git/utils"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -17,7 +18,7 @@ func InitAuthDB() (*gorm.DB, error) {
 	}
 	db, err := gorm.Open(mysql.Open(utils.GlobalObject.AuthDsn), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
-			TablePrefix:   "",
+			TablePrefix:   "_",
 			SingularTable: true,
 			//NameReplacer:        nil,
 			//NoLowerCase:         false,
@@ -34,7 +35,7 @@ func InitAuthDB() (*gorm.DB, error) {
 	sqlDB.SetConnMaxLifetime(time.Hour * 24)                  //生命周期为1天
 
 	err = db.AutoMigrate(
-	//&sqlhandle.UserBaseData{},
+		&model.UserInfo{},
 	)
 
 	return db, nil

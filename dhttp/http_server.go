@@ -21,15 +21,45 @@ func removePortFromAddress(addr string) string {
 
 func RunHttp() {
 	SChan = make(chan bool)
-
+	var wg sync.WaitGroup
 	// 定义处理HTTP请求的处理函数
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost {
-			var wg sync.WaitGroup
+
+	//开始请求下载
+	http.HandleFunc("/down_load/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
 			wg.Add(1)
-			go HandGetRequest(w, r, &wg)
-			wg.Wait() // 等待Goroutine完成
+			go func() {
+				defer wg.Done() //go程执行完毕后结束
+				HandDownLoadRequest(w, r)
+			}()
 		}
+		wg.Wait() // 等待Goroutine完成
+	})
+
+	//请求下载前的md5检查
+	http.HandleFunc("/check", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			wg.Add(1)
+			go func() {
+				defer wg.Done() //go程执行完毕后结束
+				HandMd5CheckRequest(w, r)
+			}()
+		}
+		wg.Wait() // 等待Goroutine完成
+	})
+
+	//
+	http.HandleFunc("/run", func(w http.ResponseWriter, r *http.Request) {
+
+		if r.Method == http.MethodPost {
+			wg.Add(1)
+			go func() {
+				defer wg.Done() //go程执行完毕后结束
+				HandPostRequest(w, r)
+			}()
+		}
+
+		wg.Wait() // 等待Goroutine完成
 	})
 	// 启动HTTP服务器并监听端口
 	port := utils.GlobalObject.HttpPort
