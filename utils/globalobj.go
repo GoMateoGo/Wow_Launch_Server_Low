@@ -1,11 +1,14 @@
 package utils
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"gitee.com/mrmateoliu/wow_launch.git/wowiface"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
+	"io"
 	"net"
 	"os"
 	"strings"
@@ -116,4 +119,22 @@ func GetMACAddress() (string, error) {
 	}
 
 	return "", fmt.Errorf("找不到有效的MAC地址")
+}
+
+func CheckMD5(md5Value string) bool {
+	filePath := "downloaded.zip"
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		return false
+	}
+	defer file.Close()
+
+	hash := md5.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return false
+	}
+
+	calculatedMD5 := hex.EncodeToString(hash.Sum(nil))
+	return strings.EqualFold(calculatedMD5, md5Value)
 }
