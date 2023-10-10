@@ -19,5 +19,6 @@ bin-release/
 *.txt
 *.exe
 *.exe~
+*.dll
 client*.go
 client.go
