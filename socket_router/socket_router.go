@@ -14,6 +14,8 @@ import (
 
 // 注册自定义路由
 func RegisterRouter(s wowiface.IServer) {
+	//发送过期时间
+	s.AddRouter(100, &SendExpireTime{Server: s})
 	//获取用户链接信息
 	s.AddRouter(101, &HandClientConnRouter{Server: s})
 	//关闭指定连接
@@ -26,6 +28,26 @@ func RegisterRouter(s wowiface.IServer) {
 	s.AddRouter(1, &RegisterAccount{})
 	//修改/找回密码
 	s.AddRouter(2, &ChangePassword{})
+}
+
+type SendExpireTime struct {
+	wownet.BaseRouter
+	Server wowiface.IServer
+}
+
+func (s *SendExpireTime) AfterHandle(re wowiface.IRequest) {
+
+	go func() {
+		for {
+			serverOwner, err := utils.SServer.GetConnMgr().GetServerOwner()
+			if err != nil {
+				fmt.Println("服务端UI管理离线", err.Error())
+				return
+			}
+			_ = serverOwner.SendMsg(100, []byte(strconv.FormatInt(utils.RemainTimeSecond, 10))) //发送网关剩余时间
+			time.Sleep(1 * time.Second)
+		}
+	}()
 }
 
 type ChangePassword struct {

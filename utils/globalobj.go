@@ -15,10 +15,11 @@ import (
 )
 
 var (
-	Logger  *zap.SugaredLogger
-	AuthDB  *gorm.DB
-	SelfMac string
-	SServer wowiface.IServer
+	Logger           *zap.SugaredLogger
+	AuthDB           *gorm.DB
+	SelfMac          string
+	SServer          wowiface.IServer
+	RemainTimeSecond int64 = 1
 )
 
 /*
