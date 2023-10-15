@@ -18,7 +18,6 @@ var (
 	Logger           *zap.SugaredLogger
 	AuthDB           *gorm.DB
 	CharaDB          *gorm.DB
-	SelfMac          string
 	SServer          wowiface.IServer
 	RemainTimeSecond int64 = 1
 )
@@ -51,6 +50,8 @@ type GlobalObj struct {
 	AuthMaxIdleConn  int              //最多空闲链接数
 	AuthMaxOpenConn  int              //最多打开连接数
 	BanSql           bool             //是否也禁用数据库(账号)ip地址,需要链接数据库
+	WebSite          string           //网站主页
+	PayWebSite       string           //充值页面
 }
 
 /*
@@ -93,6 +94,8 @@ func init() {
 		AuthMaxIdleConn:  100,   //最多空闲链接数
 		AuthMaxOpenConn:  100,   //最多打开连接数
 		BanSql:           false, //是否也禁用数据库(账号)ip地址,需要链接数据库
+		WebSite:          "",    //网站主页
+		PayWebSite:       "",    //充值页面
 	}
 
 	//应该尝试从conf/xxx.json去加载一些用户自定义参数

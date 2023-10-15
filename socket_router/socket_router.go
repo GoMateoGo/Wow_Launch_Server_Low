@@ -30,6 +30,23 @@ func RegisterRouter(s wowiface.IServer) {
 	s.AddRouter(2, &ChangePassword{})
 	//角色解卡
 	s.AddRouter(3, &PlayerUnLock{})
+	//网站首页 和 充值首页
+	s.AddRouter(4, &WebSite{})
+}
+
+// 网站首页 和 充值首页
+type WebSite struct {
+	wownet.BaseRouter
+}
+
+// 网站首页 和 充值首页
+func (s *WebSite) AfterHandle(re wowiface.IRequest) {
+	msgDat := re.GetData()
+	url := utils.GlobalObject.WebSite
+	if string(msgDat) == "1" {
+		url = utils.GlobalObject.PayWebSite
+	}
+	_ = re.GetConnection().SendMsg(4, []byte(url)) //发送网站给客户端
 }
 
 // 角色解卡
@@ -294,7 +311,11 @@ func (s *HandClientConnRouter) AfterHandle(request wowiface.IRequest) {
 		return
 	}
 
-	if conn.GetConnMac() == utils.SelfMac {
+	myMac, err := utils.GetMACAddress()
+	if err != nil {
+		return
+	}
+	if conn.GetConnMac() == myMac {
 		//return
 	}
 
