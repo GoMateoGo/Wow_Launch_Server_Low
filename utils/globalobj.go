@@ -17,6 +17,7 @@ import (
 var (
 	Logger           *zap.SugaredLogger
 	AuthDB           *gorm.DB
+	CharaDB          *gorm.DB
 	SelfMac          string
 	SServer          wowiface.IServer
 	RemainTimeSecond int64 = 1
@@ -45,7 +46,8 @@ type GlobalObj struct {
 	LogMaxBackups    uint32           //保留旧文件的最大个数
 	LogMaxAge        uint32           //保留旧文件的最大天数
 	Develop          bool             //是否为开发者模式
-	AuthDsn          string           //数据库连接 1
+	AuthDsn          string           //数据库连接 1 角色库
+	CharaDsn         string           //数据库链接2 角色库
 	AuthMaxIdleConn  int              //最多空闲链接数
 	AuthMaxOpenConn  int              //最多打开连接数
 	BanSql           bool             //是否也禁用数据库(账号)ip地址,需要链接数据库
@@ -87,6 +89,7 @@ func init() {
 		LogMaxAge:        90,   //保留旧文件的最大天数
 		Develop:          true, //是否为开发者模式
 		AuthDsn:          "root:root@tcp(127.0.0.1:3307)/wow_launch?charset=utf8mb4&parseTime=True&loc=Local",
+		CharaDsn:         "root:root@tcp(127.0.0.1:3307)/wow_launch?charset=utf8mb4&parseTime=True&loc=Local",
 		AuthMaxIdleConn:  100,   //最多空闲链接数
 		AuthMaxOpenConn:  100,   //最多打开连接数
 		BanSql:           false, //是否也禁用数据库(账号)ip地址,需要链接数据库

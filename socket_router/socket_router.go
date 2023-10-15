@@ -28,6 +28,58 @@ func RegisterRouter(s wowiface.IServer) {
 	s.AddRouter(1, &RegisterAccount{})
 	//修改/找回密码
 	s.AddRouter(2, &ChangePassword{})
+	//角色解卡
+	s.AddRouter(3, &PlayerUnLock{})
+}
+
+// 角色解卡
+type PlayerUnLock struct {
+	wownet.BaseRouter
+}
+
+// 角色解卡
+func (s *PlayerUnLock) AfterHandle(re wowiface.IRequest) {
+	//0. 解析账号,密码,角色名称
+	var errStr string
+	var userName string   //账号
+	var Pwd string        //密码
+	var playerName string //角色名称
+	msgDat := re.GetData()
+	parts := strings.Split(string(msgDat), "#")
+	if len(parts) == 3 {
+		userName = parts[0]
+		Pwd = parts[1]
+		playerName = parts[2]
+	} else {
+		errStr = fmt.Sprintf("[角色解卡]失败原因,账号密码解析错误,解卡账号:%s,解卡角色名称:%s", userName, playerName)
+		utils.Logger.Error(errStr)
+		_ = re.GetConnection().SendMsg(3, []byte(errStr)) //解卡失败.
+		return
+	}
+	//1. 验证账号密码正确性()
+	acc := sqlhandle.NewUserData(userName, Pwd, "")
+	accId, err := acc.CheckSaltAndVerifier()
+	if err != nil {
+		_ = re.GetConnection().SendMsg(3, []byte(err.Error())) //解卡失败.
+		return
+	}
+	if accId == 0 {
+		_ = re.GetConnection().SendMsg(3, []byte("没有找到对应的账号")) //解卡失败.
+		return
+	}
+	//2. 检查角色是否存在
+	ch := sqlhandle.NewCharacters(userName, Pwd, playerName)
+	pName := ch.HasCharacter(accId)
+	if pName == "" {
+		_ = re.GetConnection().SendMsg(3, []byte("没有找到该角色")) //解卡失败.
+		return
+	}
+	//3. 解卡
+	if err = ch.UnLockPlayer(accId); err != nil {
+		_ = re.GetConnection().SendMsg(3, []byte("解卡失败,请联系游戏管理员")) //解卡失败.
+		return
+	}
+	_ = re.GetConnection().SendMsg(3, []byte("解卡完成!!")) //解卡成功.
 }
 
 type SendExpireTime struct {

@@ -95,12 +95,22 @@ func SysInit() {
 	conf.ReadBanList()
 
 	// ========================================================
-	// =初始化数据链接
+	// =初始化账号数据链接
 	if db, err := conf.InitAuthDB(); err != nil {
 		if err != nil {
 			fmt.Println("账号数据库连接失败...")
 		}
 	} else {
 		utils.AuthDB = db
+	}
+
+	// ========================================================
+	// =初始化角色数据库连接
+	if db, err := conf.InitCharaDB(); err != nil {
+		if err != nil {
+			fmt.Println("角色数据库连接失败...")
+		}
+	} else {
+		utils.CharaDB = db
 	}
 }

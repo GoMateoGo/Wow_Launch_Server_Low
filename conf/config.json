@@ -9,6 +9,7 @@
   "MaxPackageSize": 4096,
   "WorkerPoolSize": 10,
   "AuthDsn" : "root:root@tcp(127.0.0.1:3307)/new_auth?charset=utf8&parseTime=True&loc=Local",
-  "CharaDsn" : "root:root@tcp(127.0.0.1:3307)/z_gorm?charset=utf8mb4&parseTime=True&loc=Local",
-  "BanSql": false
+  "CharaDsn" : "root:root@tcp(127.0.0.1:3307)/new_chara?charset=utf8mb4&parseTime=True&loc=Local",
+  "BanSql": false,
+  "WebSite": "www.baidu.com"
 }

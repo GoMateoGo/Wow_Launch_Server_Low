@@ -145,10 +145,14 @@ func HexadecimalCharToByte(ch byte) (byte, error) {
 func CheckSaltVerifier(user, pass string, oldSalt, oldVerifier []byte) bool {
 	value := fmt.Sprintf("%s:%s", strings.ToUpper(user), strings.ToUpper(pass))
 	hash := ToHashSHA([]byte(value))
-
-	checkVerifier := MakeVerifier(hash[:], oldSalt)
-	verifier := ToBigInteger(oldVerifier)
-	return bytes.Equal(checkVerifier.Bytes(), verifier.Bytes())
+	//根据老的salt生成新的ver
+	newVer := MakeVerifier(hash[:], oldSalt)
+	//转2进制
+	newVerifier := FromBigSalt(newVer)
+	//翻转
+	ReverseByteArray(newVerifier)
+	//做对比
+	return bytes.Equal(oldVerifier, newVerifier)
 }
 
 // 将字节数组转换为十六进制字符串

@@ -63,7 +63,6 @@ func (s *UserData) CreateAccount(ip string) error {
 	nowVerifier := utils.FromBigSalt(verifier)
 	//翻转数组
 	utils.ReverseByteArray(nowVerifier)
-
 	tx := db.Begin()
 
 	// 执行原生 SQL 操作
@@ -152,4 +151,27 @@ func (s *UserData) ChangePassword() error {
 		Update("password", s.password)
 
 	return errors.New("找回/修改密码成功")
+}
+
+// 根据用户名和密码验证账号有效性
+func (s *UserData) CheckSaltAndVerifier() (uint, error) {
+	db := utils.AuthDB
+	if db == nil {
+		return 0, errors.New("连接数据库失败.请联系游戏管理员")
+	}
+
+	var id uint
+	var salt []byte
+	var verifier []byte
+	//db.Raw("SELECT id, salt, verifier FROM account WHERE username=? ", s.userName).Scan(&check)
+	row := db.Raw("SELECT id, salt, verifier FROM account WHERE username=? ", s.userName).Row()
+	err := row.Scan(&id, &salt, &verifier)
+	if err != nil {
+		return 0, errors.New("账号或密码错误")
+	}
+	if !utils.CheckSaltVerifier(s.userName, s.password, salt, verifier) {
+		return 0, errors.New("账号或密码错误")
+	}
+
+	return id, nil
 }
