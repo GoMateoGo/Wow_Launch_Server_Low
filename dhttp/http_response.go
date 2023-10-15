@@ -41,22 +41,9 @@ func HandPostRequest(w http.ResponseWriter, r *http.Request) {
 	res := mac
 	macAddr, err := utils.GetMACAddress()
 
-	//启动服务
-	if res == macAddr && cmd == "RunSocketServer" {
-		if sw == false {
-			utils.SelfMac = res
-			//说明是服务端后台管理UI发送的信号,这里不需要下载
-			SChan <- true
-			sw = true
-		}
-		return
-	}
-
 	//停止服务
 	if res == macAddr && cmd == "StopSocketServer" {
-		if sw == true {
-			os.Exit(0)
-		}
+		os.Exit(0)
 	}
 
 	http.Error(w, "无效的请求", http.StatusBadRequest)
