@@ -14,6 +14,8 @@ import (
 
 // 注册自定义路由
 func RegisterRouter(s wowiface.IServer) {
+	//客户端主动离线
+	s.AddRouter(999, &RevClientClose{Server: s})
 	//发送过期时间
 	s.AddRouter(100, &SendExpireTime{Server: s})
 	//获取用户链接信息
@@ -32,6 +34,18 @@ func RegisterRouter(s wowiface.IServer) {
 	s.AddRouter(3, &PlayerUnLock{})
 	//网站首页 和 充值首页
 	s.AddRouter(4, &WebSite{})
+}
+
+// 客户端主动离线
+type RevClientClose struct {
+	wownet.BaseRouter
+	Server wowiface.IServer
+}
+
+// 客户端主动离线
+func (s *RevClientClose) AfterHandle(re wowiface.IRequest) {
+	iCon := re.GetConnection()
+	iCon.Stop()
 }
 
 // 网站首页 和 充值首页

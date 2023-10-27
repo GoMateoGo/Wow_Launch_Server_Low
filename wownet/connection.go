@@ -49,10 +49,6 @@ type Connection struct {
 	propertyLock sync.RWMutex
 }
 
-func SendMsgToClient(connId, msgId uint32, msgData []byte) {
-
-}
-
 // 初始化链接模块的方法
 func NewConnection(server wowiface.IServer, conn *net.TCPConn, connId uint32, msgHandle wowiface.IMsgHandle) *Connection {
 	c := &Connection{
